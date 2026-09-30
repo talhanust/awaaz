@@ -1,0 +1,7 @@
+streamlit>=1.40
+anthropic>=0.40
+psycopg[binary]>=3.2
+folium>=0.17
+streamlit-folium>=0.22
+streamlit-js-eval>=0.1.7
+requests>=2.31
