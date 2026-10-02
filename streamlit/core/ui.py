@@ -230,14 +230,26 @@ def local_text(s: str):
         st.write(s)
 
 
+def base_map(location, zoom: int) -> folium.Map:
+    """Free OpenStreetMap tiles (no API key), toned down to grey so issue markers stand out."""
+    m = folium.Map(location=location, zoom_start=zoom, control_scale=True, tiles="OpenStreetMap")
+    m.get_root().header.add_child(folium.Element(
+        "<style>.leaflet-tile-pane{filter:grayscale(.9) contrast(.92) brightness(1.06)}"
+        ".marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(1,65,28,.25)}"
+        ".marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#01411C;color:#fff;font-weight:700}</style>"))
+    return m
+
+
 def issues_map(issues: list[dict], pin: tuple[float, float] | None = None, zoom: int = 15) -> folium.Map:
-    m = folium.Map(location=pin or CENTER, zoom_start=zoom, control_scale=True, tiles="CartoDB positron")
+    from folium.plugins import MarkerCluster
+    m = base_map(pin or CENTER, zoom)
+    layer = MarkerCluster(options={"maxClusterRadius": 38, "disableClusteringAtZoom": 17}).add_to(m) if len(issues) > 40 else m
     for i in issues:
         if i.get("lat") is None:
             continue
         folium.CircleMarker([i["lat"], i["lng"]], radius=6 + 3 * (i["report_count"] ** 0.5), color="#ffffff", weight=2,
                             fill=True, fill_color=CAT_HEX.get(i["category"], "#5B6475"), fill_opacity=0.88,
-                            tooltip=f"{i['issue_id']} · {i['summary']} · {i['report_count']} residents").add_to(m)
+                            tooltip=f"{i['issue_id']} · {i['summary']} · {i['report_count']} residents").add_to(layer)
     if pin:
         folium.Marker(pin, tooltip="Problem location", icon=folium.Icon(color="darkgreen", icon="map-marker", prefix="fa")).add_to(m)
     return m

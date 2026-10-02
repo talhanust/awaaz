@@ -386,12 +386,14 @@ def status_map(df: pd.DataFrame):
     import folium
     from core.config import CENTER
     show_fixed = st.toggle("Also show verified fixes", key="mon_fixed")
-    m = folium.Map(location=CENTER, zoom_start=15, tiles="CartoDB positron", control_scale=True)
+    from folium.plugins import MarkerCluster
+    m = ui.base_map(CENTER, 15)
     pts = df[(~df["closed"]) | (show_fixed & (df["status"] == "resolved"))].dropna(subset=["lat", "lng"])
+    layer = MarkerCluster(options={"maxClusterRadius": 38, "disableClusteringAtZoom": 17}).add_to(m) if len(pts) > 40 else m
     for r in pts.itertuples():
         folium.CircleMarker([r.lat, r.lng], radius=5 + 2.5 * (r.backers ** 0.5), color="#FFFFFF", weight=1.5, fill=True,
                             fill_color=STATUS_COLOR.get(r.stamp_class, C["ink"]), fill_opacity=0.85,
-                            tooltip=f"{r.issue_id} · {r.summary} · {r.stamp} · {int(r.backers)} residents").add_to(m)
+                            tooltip=f"{r.issue_id} · {r.summary} · {r.stamp} · {int(r.backers)} residents").add_to(layer)
     st_folium(m, height=520, use_container_width=True, returned_objects=[], key=f"monmap-{show_fixed}")
     legend = [("Past due or escalated", C["red"]), ("Filed", C["ink"]), ("Acknowledged or work started", C["blue"])] + ([("Verified fixed", C["action"])] if show_fixed else [])
     st.markdown(" ".join(f'<span class="cat" style="margin-right:14px"><i style="background:{c}"></i>{n}</span>' for n, c in legend), unsafe_allow_html=True)

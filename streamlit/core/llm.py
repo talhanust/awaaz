@@ -124,10 +124,17 @@ def _complete(system: str | None, content, model: str, max_tokens: int) -> str:
             if "image" in x else {"type": "text", "text": x["text"]} for x in parts]
     messages = ([{"role": "system", "content": system}] if system else []) + \
                [{"role": "user", "content": user if any("image" in x for x in parts) else parts[0]["text"] if len(parts) == 1 else user}]
+    body = {"model": model, "messages": messages, "temperature": 0.2,
+            # thinking models spend tokens reasoning before answering; leave room so the answer isn't cut off
+            "max_tokens": max(max_tokens, 1024) if p == "gemini" else max_tokens}
+    if p == "gemini":  # classification and drafting don't need long reasoning: turn it off (2.5) or keep it minimal (newer)
+        body["reasoning_effort"] = "none" if "2.5" in model else "low"
     for attempt in range(3):  # free tiers rate-limit: back off briefly on 429
         r = requests.post(f"{cfg['base']}/chat/completions", timeout=60,
-                          headers={"Authorization": f"Bearer {secret(cfg['key'])}", "Content-Type": "application/json"},
-                          json={"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.2})
+                          headers={"Authorization": f"Bearer {secret(cfg['key'])}", "Content-Type": "application/json"}, json=body)
+        if r.status_code == 400 and "reasoning" in (r.text or "").lower() and "reasoning_effort" in body:
+            body.pop("reasoning_effort")  # this model doesn't accept the setting: retry without it
+            continue
         if r.status_code == 429 and attempt < 2:
             time.sleep(2 * (attempt + 1))
             continue
@@ -143,7 +150,11 @@ def _complete(system: str | None, content, model: str, max_tokens: int) -> str:
                 return _complete(system, content, picked, max_tokens)
         if not r.ok:
             raise RuntimeError(f"{cfg['label']} {r.status_code}: {msg}")
-        return r.json()["choices"][0]["message"]["content"] or ""
+        choice = (r.json().get("choices") or [{}])[0]
+        text = (choice.get("message") or {}).get("content")
+        if not text:  # e.g. the whole budget went on reasoning
+            raise RuntimeError(f"{cfg['label']} returned no text (finish reason: {choice.get('finish_reason', 'unknown')})")
+        return text
     raise RuntimeError(f"{cfg['label']} rate limit reached")
 
 
@@ -177,7 +188,7 @@ def ask_json(system: str, payload: dict, validate, model: str | None = None, max
 def test_connection() -> tuple[bool, str]:
     """Tiny round trip for the status page."""
     try:
-        d = ask_json('Reply with ONLY this JSON: {"ok": true}', {"ping": 1}, lambda d: None if d.get("ok") is True else "no ok", max_tokens=20)
+        d = ask_json('Reply with ONLY this JSON: {"ok": true}', {"ping": 1}, lambda d: None if d.get("ok") is True else "no ok", max_tokens=200)
         return True, f"{label()} answered using {fast_model()}"
     except Exception as e:
         return False, str(e)[:300]
