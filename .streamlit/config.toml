@@ -1,0 +1,10 @@
+# Brand theme for built-in components (chips, toggles, tabs, table progress bars): Pakistani flag green.
+[theme]
+base = "light"
+primaryColor = "#0B6B35"
+backgroundColor = "#F5F8F6"
+secondaryBackgroundColor = "#E6EEE8"
+textColor = "#14261B"
+
+[client]
+toolbarMode = "minimal"

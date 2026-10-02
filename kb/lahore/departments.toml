@@ -1,0 +1,119 @@
+# Lahore departments Awaaz can route to. Loaded into the database automatically when the app starts.
+# DEMO DATA: verify every channel, contact, helpline and target before a pilot.
+
+[[department]]
+id = "LESCO"
+name = "LESCO"
+categories = ["electrical"]
+channel = "portal"
+target = "LESCO online complaint portal"
+helpline = "118"
+benchmark_days = 7
+
+[[department]]
+id = "MCL-LIGHTS"
+name = "MCL Street Lighting"
+categories = ["electrical"]
+channel = "written_application"
+target = "Metropolitan Corporation Lahore, Street Lighting"
+benchmark_days = 10
+
+[[department]]
+id = "WASA-LHR"
+name = "WASA Lahore"
+categories = ["water", "sanitation"]
+channel = "email"
+target = "complaints@wasa-lahore.example"
+helpline = "1334"
+benchmark_days = 7
+
+[[department]]
+id = "LWMC"
+name = "LWMC"
+categories = ["sanitation"]
+channel = "whatsapp"
+target = "LWMC WhatsApp complaint line"
+helpline = "1139"
+benchmark_days = 3
+
+[[department]]
+id = "MCL-ROADS"
+name = "MCL Roads"
+categories = ["roads"]
+channel = "written_application"
+target = "Metropolitan Corporation Lahore, Roads Wing"
+benchmark_days = 14
+
+[[department]]
+id = "TEPA"
+name = "TEPA (Traffic Engineering)"
+categories = ["roads"]
+channel = "written_application"
+target = "TEPA, Lahore Development Authority"
+benchmark_days = 14
+
+[[department]]
+id = "CTP"
+name = "City Traffic Police"
+categories = ["roads", "encroachment"]
+channel = "portal"
+target = "City Traffic Police Lahore"
+helpline = "1915"
+benchmark_days = 7
+
+[[department]]
+id = "SNGPL"
+name = "SNGPL"
+categories = ["gas"]
+channel = "portal"
+target = "SNGPL online complaint portal"
+helpline = "1199"
+benchmark_days = 5
+
+[[department]]
+id = "MCL-ENC"
+name = "MCL Anti-Encroachment"
+categories = ["encroachment"]
+channel = "written_application"
+target = "Metropolitan Corporation Lahore, Anti-Encroachment Cell"
+benchmark_days = 21
+
+[[department]]
+id = "LDA"
+name = "Lahore Development Authority"
+categories = ["roads", "encroachment", "other"]
+channel = "written_application"
+target = "LDA, Building Control and Engineering"
+benchmark_days = 21
+
+[[department]]
+id = "PHA"
+name = "Parks & Horticulture Authority"
+categories = ["other"]
+channel = "written_application"
+target = "PHA Lahore"
+benchmark_days = 10
+
+[[department]]
+id = "LCB"
+name = "Lahore Cantonment Board"
+categories = ["roads", "water", "sanitation", "electrical", "encroachment", "other"]
+channel = "written_application"
+target = "Lahore Cantonment Board"
+benchmark_days = 14
+
+[[department]]
+id = "WCLA"
+name = "Walled City of Lahore Authority"
+categories = ["encroachment", "other"]
+channel = "written_application"
+target = "Walled City of Lahore Authority"
+benchmark_days = 21
+
+[[department]]
+id = "DHA-LHR"
+name = "DHA Lahore (society administration)"
+categories = ["roads", "water", "sanitation", "electrical", "other"]
+channel = "written_application"
+target = "DHA Lahore complaint cell"
+benchmark_days = 10

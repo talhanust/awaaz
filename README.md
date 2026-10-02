@@ -1,10 +1,12 @@
+<img src="brand/awaaz-logo-color-transparent.png" alt="Awaaz" width="320">
+
 # Awaaz — civic accountability layer (production starter)
 
 *Your complaint doesn't end when you file it. It ends when it's fixed.*
 
-**Live demo:** https://talhanust.github.io/awaaz/ (runs in the browser, no sign-up; open it on a phone to try "Current location")
+**Live demo:** https://YOUR-USERNAME.github.io/awaaz/ (runs in the browser, no sign-up; open it on a phone to try "Current location")
 
-![CI](https://github.com/talhanust/awaaz/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/YOUR-USERNAME/awaaz/actions/workflows/ci.yml/badge.svg)
 
 This is the real, deployable version of the Awaaz MVP: citizens report problems on **WhatsApp** (voice note, photo or text plus a location), five Claude-powered agents classify, de-duplicate, file, track and escalate them, and authorities work from a ranked, de-duplicated **dashboard**.
 
@@ -68,11 +70,11 @@ The knowledge base lives in `kb/<city>/*.md`: front matter (title, city, departm
    git add .
    git commit -m "Awaaz v3"
    git branch -M main
-   git remote add origin https://github.com/talhanust/awaaz.git
+   git remote add origin https://github.com/YOUR-USERNAME/awaaz.git
    git push -u origin main
    ```
    `.gitignore` keeps `.env` and `.env.local` out of the repo. Never commit API keys.
-2. **Demo:** Settings → Pages → Deploy from a branch → `main`, folder `/docs`. It appears at `https://talhanust.github.io/awaaz/` within a minute or two. Replace `talhanust` in this README.
+2. **Demo:** Settings → Pages → Deploy from a branch → `main`, folder `/docs`. It appears at `https://YOUR-USERNAME.github.io/awaaz/` within a minute or two. Replace `YOUR-USERNAME` in this README.
 3. **CI:** `.github/workflows/ci.yml` type-checks and builds on every push; the badge above turns green once it passes.
 4. **App:** import the repo into Vercel and follow the setup below. Every push to `main` redeploys.
 
