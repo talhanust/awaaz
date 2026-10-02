@@ -25,7 +25,8 @@ def page():
     except Exception as e:
         db_ok = f"not connected ({type(e).__name__})"
     rows = [("Database (Postgres + PostGIS + pgvector)", db_ok),
-            ("AI agents", f"on · {llm.label()} · {llm.fast_model()}" + (f" / {llm.smart_model()}" if llm.smart_model() != llm.fast_model() else "")
+            ("AI agents", (f"on · {llm.label()} · {llm.fast_model()}" + (f" / {llm.smart_model()}" if llm.smart_model() != llm.fast_model() else "")
+                           + (f" · backups: {', '.join(llm.PROVIDERS[q]['label'] for q in llm.chain()[1:])}" if len(llm.chain()) > 1 else " · no backup provider"))
              if llm.enabled() else "off: using labelled fallback rules"),
             ("Embeddings for RAG (Voyage AI)", "on · hybrid search" if kb.embeddings_enabled() else "off · keyword search"),
             ("Voice notes (Whisper)", "on" if services.stt_enabled() else "off · text and photos only"),
@@ -37,7 +38,7 @@ def page():
         (st.success if ok else st.error)(msg)
         if not ok and llm.provider() != "anthropic":
             try:
-                models = [m for m in llm.available_models() if any(t in m for t in ("flash", "llama", "grok"))][:15]
+                models = [m for m in llm.available_models() if any(t in m for t in ("flash", "llama", "grok", "mistral", ":free"))][:15]
                 if models:
                     st.info("Models your key can use: " + ", ".join(models) +
                             ". To force one, add a line like LLM_MODEL = \"" + models[0] + "\" to Secrets.")

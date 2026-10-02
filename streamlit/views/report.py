@@ -85,6 +85,7 @@ def run_pipeline(phone: str, text: str, photo, audio, loc: dict, prior: dict | N
             photo_desc = llm.describe_image(photo.getvalue(), photo.type)
             input_type = "photo" if not text else input_type
             _trace(flow, "Vision", photo_desc, llm.label()); st.write(flow["trace"][-1])
+        answer = text
         if prior:
             text = f"{prior['text']}. {text}"
         place = services.reverse_geocode(round(loc["lat"], 5), round(loc["lng"], 5))
@@ -117,6 +118,16 @@ def run_pipeline(phone: str, text: str, photo, audio, loc: dict, prior: dict | N
         _trace(flow, "1b · Jurisdiction Router (RAG)", f"{len(passages)} passages retrieved → **{name}**"
                f"{' (changed from ' + db.authority(c['authority_id'])['name'] + ')' if routing['changed'] else ''}. Based on: {src}", rmode)
         st.write(flow["trace"][-1])
+        if (routing.get("needs_clarification") and prior and prior.get("asked_by") == "router"
+                and "society" in routing["needs_clarification"].lower() and not re.search(r"\bcity|shehr|sheher|شہر|\bno\b|nahi|نہیں", answer, re.I)):
+            # the resident confirmed it's inside a private society: a city department won't act, so don't file there
+            st.session_state.setdefault("warnings", []).append(
+                "Inside private housing societies, the society administration maintains roads, streetlights, sewerage and waste, so a city "
+                "department won't act on this. Please contact your society office. If it's actually a city area, report it again and answer "
+                "“city area”. Gas and electricity supply problems are different: SNGPL and LESCO handle those everywhere.")
+            status.update(label="Not filed: this is a housing-society matter", state="complete")
+            st.session_state.flow = None
+            return
         if routing.get("needs_clarification") and not (prior and prior.get("asked_by") == "router"):
             flow.update(stage="clarify", question=routing["needs_clarification"], text=text, asked_by="router", citizen=citizen)
             status.update(label="One question before filing", state="complete")
@@ -285,16 +296,13 @@ def render_flow(flow: dict):
                 moved = (f"It moved from #{flow['before']} to **#{flow['rank']}** of {flow['total']} in the department's queue."
                          if flow["before"] != flow["rank"] else f"It's **#{flow['rank']}** of {flow['total']} in the department's queue.")
                 st.markdown(moved)
-        line = f"{issue['summary']}. {issue['report_count'] + (issue['confirmations'] or 0)} residents backing it, {auth['name']}, due {issue['expected_by']:%d %b}."
+        line = f"{issue['summary']}. {ui.plural(issue['report_count'] + (issue['confirmations'] or 0), 'resident')} backing it, {auth['name']}, due {issue['expected_by']:%d %b}."
         st.html(ui.receipt(flow["issue_id"], line))
         if typical := db.typical_fix_days(auth["authority_id"]):
             st.caption(f"Based on {typical[1]} verified fixes, {auth['name']} usually takes about {typical[0]:.0f} days. Awaaz will check in on {issue['expected_by']:%d %b}.")
         if flow["new"]:
-            with st.expander("The complaint Awaaz prepared" + ("" if flow["sent"] else " (ready to submit)"), expanded=not flow["sent"]):
-                if flow["sent"]:
-                    st.write(f"Sent by email to {auth['filing_target']}.")
-                else:
-                    st.write(f"{auth['name']} doesn't take online complaints yet, so submit this as a {auth['filing_channel'].replace('_', ' ')}.")
+            with st.expander("The complaint Awaaz prepared" + ("" if flow["sent"] else ": ready to submit"), expanded=not flow["sent"]):
+                st.write(ui.filing_instruction(auth, flow["sent"]))
                 st.code(flow["doc"], language=None, wrap_lines=True)
                 st.download_button("Download complaint (.txt)", flow["doc"], file_name=f"{flow['issue_id']}.txt")
         show_trace(flow)
@@ -309,11 +317,15 @@ def render_flow(flow: dict):
 def page():
     st.title("Report a problem")
     st.markdown('<p class="sub">Drop a pin, say what\'s wrong in Urdu, Roman Urdu or English, and Awaaz takes it from there.</p>', unsafe_allow_html=True)
-    ui.show_warnings()
     flow = st.session_state.get("flow")
     if flow and flow.get("stage") in ("clarify", "match", "done"):
+        if flow["stage"] == "done":
+            issue = db.get_issue(flow["issue_id"])
+            ui.emergency_card(issue, flow["auth"])  # safety advice before anything else
+        ui.show_warnings()
         render_flow(flow)
         return
+    ui.show_warnings()
 
     with st.expander("Trying it out? Load an example", expanded=False):
         cols = st.columns(len(EXAMPLES))

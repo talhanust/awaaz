@@ -75,7 +75,13 @@ ROUTE_RULES = [
 
 
 def route(c: dict, text: str, passages: list[dict]) -> dict:
-    if re.search(r"\b(society|dha|bahria)\b|سوسائٹی", text, re.I) and not re.search(r"\bcity( area)?\b", text, re.I):
+    utility = c["category"] in ("gas", "electrical") and not re.search(r"street ?lights?|batti|بتی", text, re.I)
+    if not utility and re.search(r"\bdha\b|defen[cs]e housing", text, re.I):
+        return {"authority_id": "DHA-LHR", "sources": ["lahore/02-area-types#2"], "confidence": 0.85, "needs_clarification": None,
+                "explanation": "Inside DHA, the DHA administration maintains this, not city departments.",
+                "explanation_local": {"ur-Latn": "DHA ke andar yeh kaam DHA ki intezamia karti hai, shehri idare nahi.",
+                                      "ur": "ڈی ایچ اے کے اندر یہ کام ڈی ایچ اے کی انتظامیہ کرتی ہے، شہری ادارے نہیں۔"}.get(c["language"], "")}
+    if not utility and re.search(r"\b(society|dha|bahria)\b|سوسائٹی", text, re.I) and not re.search(r"\bcity( area)?\b", text, re.I):
         return {"authority_id": c["authority_id"], "sources": ["lahore/area-types#2"], "confidence": 0.8,
                 "needs_clarification": {"en": "Is this inside a private housing society or DHA? If yes, the society office maintains it. Reply 'city area' if it's a city area.",
                                         "ur-Latn": "Kya yeh kisi private housing society ya DHA ke andar hai? Agar haan, to society office zimmedar hai. Shehri ilaqa ho to 'city area' likhein.",

@@ -255,9 +255,52 @@ def issues_map(issues: list[dict], pin: tuple[float, float] | None = None, zoom:
     return m
 
 
+def plural(n: int, word: str) -> str:
+    return f"{n} {word}" if n == 1 else f"{n} {word}s"
+
+
 def show_warnings():
     for w in st.session_state.pop("warnings", []):
         st.warning(w, icon="⚠️")
+    issues = st.session_state.pop("ai_issues", [])
+    if issues:
+        busy = any(t in d.lower() for _, d in issues for t in ("503", "high demand", "rate limit", "429", "quota"))
+        steps = list(dict.fromkeys(n for n, _ in issues))
+        head = ("The AI service is busy right now" if busy else "The AI service didn't respond") + \
+               f", so Awaaz used its backup rules for {plural(len(steps), 'step')} ({', '.join(steps)}). Your report is still filed and tracked."
+        st.info(head, icon="ℹ️")
+        with st.expander("Technical details"):
+            for n, d in dict(issues).items():
+                st.caption(f"{n}: {d}")
+
+
+SAFETY = {
+    "gas": "Don't switch lights or appliances on or off, avoid flames, open windows and leave the area.",
+    "electrical": "Keep at least ten metres away from the wires, and keep children and animals back.",
+    "sanitation": "Warn others and mark the spot if it's safe to do so; an open manhole can be fatal.",
+}
+
+
+def emergency_card(issue: dict, auth: dict):
+    """Urgent reports: safety first, filing second."""
+    if issue.get("severity") != "urgent":
+        return
+    lines = [f"**This sounds dangerous.** {SAFETY.get(issue['category'], 'Move away from the danger and keep others back.')}",
+             "Call **Rescue 1122** now" + (f", and **{auth['name']} on {auth['helpline']}**." if auth.get("helpline") else ".")]
+    st.error("  \n".join(lines), icon="🚨")
+
+
+def filing_instruction(auth: dict, sent: bool) -> str:
+    name, target = auth["name"], auth.get("filing_target") or auth["name"]
+    if sent:
+        return f"Sent by email to {target}."
+    return {
+        "portal": f"{name} takes complaints on its online portal ({target}). Copy these details into the portal form.",
+        "email": f"Email this to {name} at {target}.",
+        "whatsapp": f"Send this on {name}'s WhatsApp complaint line ({target}).",
+        "written_application": f"Submit this as a written application to {target}, by hand or by post. Keep a stamped copy.",
+        "api": f"This was sent to {name} directly.",
+    }.get(auth["filing_channel"], f"Submit this to {target}.")
 
 
 def receipt(issue_id: str, line: str) -> str:

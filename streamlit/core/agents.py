@@ -12,10 +12,9 @@ LANGS = ["ur", "ur-Latn", "pa", "en"]
 def _run(name: str, claude_fn, fallback_fn):
     if llm.enabled():
         try:
-            return claude_fn(), llm.label()
+            return claude_fn(), llm.used_label()
         except Exception as e:
-            detail = str(e).replace("\n", " ")[:220]
-            st.session_state.setdefault("warnings", []).append(f"{name}: {llm.label()} unavailable ({detail}); used fallback rules.")
+            st.session_state.setdefault("ai_issues", []).append((name, str(e).replace("\n", " ")[:400]))
     return fallback_fn(), "rules"
 
 
@@ -81,7 +80,7 @@ def route(c: dict, text: str, area: str) -> tuple[dict, str, list[dict]]:
         d["sources"] = [s for s in d["sources"] if s in ids]
         return d
 
-    d, mode = _run("Router", claude, lambda: rules.route(c, text, passages))
+    d, mode = _run("Router", claude, lambda: rules.route(c, f"{text} {area}", passages))
     valid = any(a["authority_id"] == d["authority_id"] for a in auths)
     override = d["authority_id"] != c["authority_id"]
     # Guardrails: real department only; no override without a cited passage or with low confidence.

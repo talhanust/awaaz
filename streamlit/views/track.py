@@ -135,6 +135,8 @@ def page():
                     f'<span>{ui.esc(auth["name"])}</span></div></div>', unsafe_allow_html=True)
     stamp_col.markdown(f'<div style="padding-top:28px;text-align:right">{ui.stamp(i, big=True, land=True)}</div>', unsafe_allow_html=True)
 
+    if not lifecycle.is_closed(i):
+        ui.emergency_card(i, auth)
     st.markdown(ui.tracker(i, events), unsafe_allow_html=True)
     m1, m2, m3 = st.columns([1, 1, 2])
     m1.metric("Residents backing it", i["report_count"] + (i["confirmations"] or 0))
@@ -171,7 +173,7 @@ def page():
         st.markdown(f'<ul class="feed">{lis}</ul>', unsafe_allow_html=True)
     with right:
         st.subheader("Share")
-        st.html(ui.receipt(i["issue_id"], f"{i['report_count'] + (i['confirmations'] or 0)} residents backing it, {auth['name']}"))
+        st.html(ui.receipt(i["issue_id"], f"{ui.plural(i['report_count'] + (i['confirmations'] or 0), 'resident')} backing it, {auth['name']}"))
         if i["formatted_complaint"]:
             with st.expander("The filed complaint"):
                 st.text(i["formatted_complaint"])
